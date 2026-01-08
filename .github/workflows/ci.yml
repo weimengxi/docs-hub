@@ -51,13 +51,9 @@ jobs:
       - name: Generate services config
         env:
           SERVICES_CONFIG: ${{ vars.SERVICES_CONFIG }}
-          GITHUB_PAGES_BASE: ${{ vars.GITHUB_PAGES_BASE }}
         run: |
           # 如果没有配置环境变量，使用默认模板
           if [ -z "$SERVICES_CONFIG" ]; then
-            OWNER="${{ github.repository_owner }}"
-            BASE_URL="${GITHUB_PAGES_BASE:-https://${OWNER}.github.io}"
-
             cat > gh-pages/services.json << EOF
           [
           ]

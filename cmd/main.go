@@ -4,10 +4,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	"docs-hub/internal/config"
 	"docs-hub/internal/handler"
 	"docs-hub/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -67,6 +68,9 @@ func main() {
 
 	// 首页（使用静态文件）
 	r.StaticFile("/", "./web/static/index.html")
+
+	// services.json 路由（兼容前端静态页面的 ./services.json 请求）
+	r.GET("/services.json", handler.GetServices(docService))
 
 	// 服务文档页面（保留模板渲染作为备用）
 	r.GET("/docs/:service", handler.ServiceDocsPage(docService))

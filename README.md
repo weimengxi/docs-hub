@@ -166,7 +166,6 @@ GitHub Pages 部署使用 **环境变量** 动态生成配置，避免污染 mai
 
 | Variable | 说明 | 示例 |
 |----------|------|------|
-| `GITHUB_PAGES_BASE` | GitHub Pages 基础 URL | `https://myorg.github.io` |
 | `SERVICES_CONFIG` | 自定义服务配置（可选） | 见下方格式 |
 
 #### 默认行为
