@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/swagger-ui/5.17.14/swagger-ui.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 10px 20px;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .navbar .back-link {
+            margin-right: 20px;
+        }
+        .service-info {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .service-info h1 {
+            margin: 0 0 5px 0;
+            font-size: 1.5rem;
+        }
+        .service-info p {
+            margin: 0;
+            color: #666;
+        }
+        .swagger-ui .topbar {
+            display: none;
+        }
+        .health-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .health-healthy {
+            background-color: #28a745;
+        }
+        .health-unhealthy {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="back-link">← 返回</a>
+        <span style="color: white;">{{ .title }}</span>
+    </nav>
+
+    <div class="service-info">
+        <h1>
+            <span class="health-indicator {{ if .service.Healthy }}health-healthy{{ else }}health-unhealthy{{ end }}"></span>
+            {{ .service.DisplayName }}
+        </h1>
+        <p>{{ .service.Description }}</p>
+    </div>
+
+    <div id="swagger-ui"></div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/swagger-ui/5.17.14/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            SwaggerUIBundle({
+                url: "{{ .swaggerURL }}",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout"
+            });
+        };
+    </script>
+</body>
+</html>

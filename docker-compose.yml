@@ -1,0 +1,27 @@
+# docs-hub 独立部署
+version: '3.8'
+
+services:
+  docs-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: docs-hub
+    environment:
+      - CONFIG_PATH=/app/configs/local.yaml
+      - PORT=9000
+      - GIN_MODE=debug
+    ports:
+      - "9000:9000"
+    networks:
+      - docs-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  docs-network:
+    driver: bridge

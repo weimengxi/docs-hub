@@ -1,0 +1,29 @@
+# docs-hub/configs/dev.yaml
+environment: "development"
+tenant: "dev"
+region: "local"
+refresh_interval: "5m"
+
+server:
+  port: "9000"
+
+services:
+  - name: "user-service"
+    display_name: "用户服务"
+    base_url: "http://user-service:8001"
+    doc_path: "/docs/swagger/swagger.json"
+    health_check: "/health"
+    status: "active"
+    owner: "user-team@company.com"
+    description: "用户账户管理服务，提供用户注册、登录、信息管理等功能"
+    tags: ["core", "authentication"]
+
+  - name: "order-service"
+    display_name: "订单服务"
+    base_url: "http://order-service:8002"
+    doc_path: "/docs/swagger/swagger.json"
+    health_check: "/health"
+    status: "active"
+    owner: "order-team@company.com"
+    description: "订单处理服务，提供订单创建、查询、状态管理等功能"
+    tags: ["business", "transaction"]

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation Portal - Docs Hub</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/swagger-ui/5.17.14/swagger-ui.css">
+  <style>
+    body { background-color: #f8f9fa; }
+    .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .hero-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 0;
+    }
+    .service-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .service-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .service-card.active {
+      border: 2px solid #667eea;
+    }
+    .health-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .health-healthy { background-color: #28a745; }
+    .health-unhealthy { background-color: #dc3545; }
+    .swagger-section { display: none; }
+    .swagger-section.show { display: block; }
+    #swagger-ui { padding: 20px 0; }
+    .loading { text-align: center; padding: 50px; color: #666; }
+    .error { text-align: center; padding: 50px; color: #dc3545; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/">API Documentation Portal</a>
+      <div class="navbar-nav ms-auto">
+        <a class="nav-link" href="#" onclick="toggleView('list')">服务列表</a>
+        <a class="nav-link" href="/api/catalog" target="_blank">API</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="hero-section text-center">
+    <div class="container">
+      <h1 class="display-5 fw-bold">API Documentation Portal</h1>
+      <p class="lead mb-0">统一的微服务 API 文档管理平台</p>
+    </div>
+  </div>
+
+  <!-- 服务列表视图 -->
+  <div class="container my-4" id="list-view">
+    <div class="row mb-3">
+      <div class="col">
+        <h4>服务列表</h4>
+      </div>
+    </div>
+    <div class="row" id="services-grid">
+      <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">加载服务列表...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Swagger 文档视图 -->
+  <div class="swagger-section" id="swagger-section">
+    <div class="container">
+      <div class="d-flex align-items-center mb-3">
+        <button class="btn btn-outline-secondary btn-sm me-3" onclick="toggleView('list')">← 返回列表</button>
+        <h5 class="mb-0" id="current-service-name"></h5>
+        <span class="badge bg-success ms-2" id="current-service-status"></span>
+      </div>
+      <p class="text-muted small" id="current-service-desc"></p>
+    </div>
+    <div id="swagger-ui"></div>
+  </div>
+
+  <footer class="bg-light py-4 mt-5">
+    <div class="container text-center">
+      <p class="text-muted mb-0">© 2024 API Documentation Portal. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.js"></script>
+  <script>
+    let services = [];
+    let currentView = 'list';
+    let ui = null;
+
+    // 配置文件路径优先级：
+    // 1. 同目录下的 services.json（gh-pages 使用）
+    // 2. /api/services（后端服务使用）
+    const CONFIG_PATHS = [
+      './services.json',
+      '/api/services'
+    ];
+
+    // 加载配置
+    async function loadConfig() {
+      for (const path of CONFIG_PATHS) {
+        try {
+          const resp = await fetch(path);
+          if (resp.ok) {
+            const data = await resp.json();
+            // 兼容两种格式：数组 或 { services: [] }
+            services = Array.isArray(data) ? data : (data.services || []);
+            console.log(`Loaded config from: ${path}`);
+            return true;
+          }
+        } catch (e) {
+          console.log(`Failed to load from ${path}:`, e.message);
+        }
+      }
+      return false;
+    }
+
+    // 渲染服务列表
+    function renderServices() {
+      const grid = document.getElementById('services-grid');
+      if (services.length === 0) {
+        grid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">暂无服务</p></div>';
+        return;
+      }
+
+      grid.innerHTML = services.map((s, i) => `
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card service-card h-100 shadow-sm" onclick="loadService(${i})">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="card-title mb-0">
+                  <span class="health-indicator ${s.healthy !== false ? 'health-healthy' : 'health-unhealthy'}"></span>
+                  ${s.title || s.displayName || s.name}
+                </h5>
+                <span class="badge bg-${s.status === 'active' ? 'success' : 'secondary'}">${s.status || 'active'}</span>
+              </div>
+              <p class="card-text text-muted small">${s.description || ''}</p>
+              ${s.tags ? `<div class="mb-2">${s.tags.map(t => `<span class="badge bg-light text-dark me-1">${t}</span>`).join('')}</div>` : ''}
+              <small class="text-muted">${s.owner || ''}</small>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+              <small class="text-muted">点击查看文档</small>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 加载服务文档
+    function loadService(index) {
+      const service = services[index];
+      
+      document.getElementById('current-service-name').textContent = service.title || service.displayName || service.name;
+      document.getElementById('current-service-desc').textContent = service.description || '';
+      document.getElementById('current-service-status').textContent = service.status || 'active';
+
+      // 确定 Swagger URL
+      const swaggerUrl = service.swaggerUrl || service.swagger_url || 
+                         `/api/docs/${service.name}/swagger.json`;
+
+      toggleView('swagger');
+
+      document.getElementById('swagger-ui').innerHTML = '<div class="loading">加载 API 文档...</div>';
+
+      try {
+        ui = SwaggerUIBundle({
+          url: swaggerUrl,
+          dom_id: '#swagger-ui',
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+          layout: "BaseLayout",
+          onFailure: () => {
+            document.getElementById('swagger-ui').innerHTML = `
+              <div class="error">
+                <h3>加载失败</h3>
+                <p>URL: ${swaggerUrl}</p>
+                <p>请确保服务已部署文档</p>
+              </div>`;
+          }
+        });
+      } catch (e) {
+        document.getElementById('swagger-ui').innerHTML = `<div class="error">Error: ${e.message}</div>`;
+      }
+    }
+
+    // 切换视图
+    function toggleView(view) {
+      currentView = view;
+      document.getElementById('list-view').style.display = view === 'list' ? 'block' : 'none';
+      document.getElementById('swagger-section').classList.toggle('show', view === 'swagger');
+    }
+
+    // 初始化
+    (async function init() {
+      const loaded = await loadConfig();
+      if (!loaded) {
+        document.getElementById('services-grid').innerHTML = 
+          '<div class="col-12"><div class="error">无法加载服务配置</div></div>';
+        return;
+      }
+      renderServices();
+    })();
+  </script>
+</body>
+</html>
