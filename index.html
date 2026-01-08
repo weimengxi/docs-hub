@@ -98,29 +98,50 @@
   <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.js"></script>
   <script>
+    // ============ 环境配置（CI 构建时会替换） ============
+    const CONFIG = {
+      mode: 'static',  // 'auto' | 'static' | 'api'
+      // auto: 先尝试 API，失败后回退到静态文件
+      // static: 纯静态模式，仅使用 services.json
+      // api: 仅使用 /api/services
+    };
+    // ============================================
+
     let services = [];
     let currentView = 'list';
     let ui = null;
 
-    // 配置文件路径优先级：
-    // 1. 同目录下的 services.json（gh-pages 使用）
-    // 2. /api/services（后端服务使用）
-    const CONFIG_PATHS = [
-      './services.json',
-      '/api/services'
-    ];
+    // 根据模式确定配置源
+    function getConfigPaths() {
+      switch (CONFIG.mode) {
+        case 'static':
+          return ['./services.json'];
+        case 'api':
+          return ['/api/services'];
+        default: // auto
+          return ['/api/services', './services.json'];
+      }
+    }
 
     // 加载配置
     async function loadConfig() {
-      for (const path of CONFIG_PATHS) {
+      const paths = getConfigPaths();
+      console.log(`Config mode: ${CONFIG.mode}, paths:`, paths);
+
+      for (const path of paths) {
         try {
           const resp = await fetch(path);
           if (resp.ok) {
             const data = await resp.json();
             // 兼容两种格式：数组 或 { services: [] }
-            services = Array.isArray(data) ? data : (data.services || []);
-            console.log(`Loaded config from: ${path}`);
-            return true;
+            const list = Array.isArray(data) ? data : (data.services || []);
+            // 只有非空数组才算加载成功
+            if (list.length > 0) {
+              services = list;
+              console.log(`Loaded ${services.length} services from: ${path}`);
+              return true;
+            }
+            console.log(`Empty services from ${path}, trying next...`);
           }
         } catch (e) {
           console.log(`Failed to load from ${path}:`, e.message);
