@@ -48,6 +48,12 @@ jobs:
           # 复制静态门户页面
           cp -r web/static/* gh-pages/
 
+      - name: Set static mode
+        run: |
+          # 将前端配置模式设置为纯静态
+          sed -i "s/mode: 'auto'/mode: 'static'/g" gh-pages/index.html
+          echo "Set CONFIG.mode to 'static' for GitHub Pages"
+
       - name: Generate services config
         env:
           SERVICES_CONFIG: ${{ vars.SERVICES_CONFIG }}
