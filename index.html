@@ -163,13 +163,13 @@
     // 加载服务文档
     function loadService(index) {
       const service = services[index];
-      
+
       document.getElementById('current-service-name').textContent = service.title || service.displayName || service.name;
       document.getElementById('current-service-desc').textContent = service.description || '';
       document.getElementById('current-service-status').textContent = service.status || 'active';
 
       // 确定 Swagger URL
-      const swaggerUrl = service.swaggerUrl || service.swagger_url || 
+      const swaggerUrl = service.swaggerUrl || service.swagger_url ||
                          `/api/docs/${service.name}/swagger.json`;
 
       toggleView('swagger');
@@ -207,7 +207,7 @@
     (async function init() {
       const loaded = await loadConfig();
       if (!loaded) {
-        document.getElementById('services-grid').innerHTML = 
+        document.getElementById('services-grid').innerHTML =
           '<div class="col-12"><div class="error">无法加载服务配置</div></div>';
         return;
       }
